@@ -1,0 +1,112 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+//  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+model User {
+  id         String    @id
+  name       String
+  email      String    @unique
+  phone      String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  businesses Business[]
+}
+
+model Business {
+  id             Int                  @id @default(autoincrement())
+  user           User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String
+  name           String
+  businessType   BusinessType?        @relation(fields: [businessTypeId], references: [id])
+  businessTypeId Int?
+  jurisdiction   Jurisdiction?        @relation(fields: [jurisdictionId], references: [id])
+  jurisdictionId Int?
+  phone          String?
+  notes          String?
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  documents      BusinessDocument[]
+}
+
+model BusinessDocument {
+  id                 Int                 @id @default(autoincrement())
+  business           Business            @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  businessId         Int
+  documentCategory   DocumentCategory
+  permitType         PermitType?         @relation(fields: [permitTypeId], references: [id])
+  permitTypeId       Int?
+  issuingAuthority   IssuingAuthority?   @relation(fields: [issuingAuthorityId], references: [id])
+  issuingAuthorityId Int?
+  jurisdiction       Jurisdiction?       @relation(fields: [jurisdictionId], references: [id])
+  jurisdictionId     Int?
+  title              String
+  permitNumber       String?
+  startDate          DateTime?
+  endDate            DateTime?
+  autoRenew          Boolean             @default(false)
+  status             DocumentStatus      @default(ACTIVE)
+  rawExtractionJson  Json?
+  sourceFileBucket   String?
+  sourceFilePath     String?
+  sourceFileContentType String?
+  sourceFileName     String?
+  sourceFileSize     Int?
+  sourceFileId       Int?
+  verifiedByUser     Boolean             @default(false)
+  verifiedByAdmin    Boolean             @default(false)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+}
+
+model BusinessType {
+  id         Int        @id @default(autoincrement())
+  name       String
+  businesses Business[]
+}
+
+model Jurisdiction {
+  id         Int        @id @default(autoincrement())
+  name       String
+  businesses Business[]
+  documents  BusinessDocument[]
+}
+
+model PermitType {
+  id        Int                @id @default(autoincrement())
+  name      String
+  documents BusinessDocument[]
+}
+
+model IssuingAuthority {
+  id        Int                @id @default(autoincrement())
+  name      String
+  documents BusinessDocument[]
+}
+
+enum DocumentCategory {
+  PERMIT
+  LICENSE
+  INSPECTION
+  INSURANCE
+  REGISTRATION
+  CERTIFICATION
+  AGREEMENT
+  OTHER
+}
+
+enum DocumentStatus {
+  ACTIVE
+  EXPIRED
+  PENDING_RENEWAL
+  PENDING_ACTIVATION
+  INACTIVE
+}
